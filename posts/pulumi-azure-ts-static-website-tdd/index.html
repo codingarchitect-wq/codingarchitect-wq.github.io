@@ -1,0 +1,468 @@
+<!doctype html><html lang=en-us><head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<link rel=icon href=/media/logo.png>
+<title>Test driven development for Infrastructure as Code using Pulumi and Jest | codingarchitect-wq</title>
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/cover.png">
+<meta name=twitter:title content="Test driven development for Infrastructure as Code using Pulumi and Jest">
+<meta name=twitter:description content="Intro I was always looking for ways how to apply TDD while doing Infrastructure as Code development.
+Especially when developing a library of reusable components and the code base increases, regressions become inevitable without proper test coverage.">
+<meta property="og:title" content="Test driven development for Infrastructure as Code using Pulumi and Jest">
+<meta property="og:description" content="Intro I was always looking for ways how to apply TDD while doing Infrastructure as Code development.
+Especially when developing a library of reusable components and the code base increases, regressions become inevitable without proper test coverage.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/"><meta property="og:image" content="https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/cover.png"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2021-10-24T20:00:00+01:00">
+<meta property="article:modified_time" content="2021-11-18T16:01:43+01:00">
+<link href=https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css rel=stylesheet integrity=sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T crossorigin=anonymous>
+<link rel=stylesheet href=https://use.fontawesome.com/releases/v5.0.13/css/all.css integrity=sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp crossorigin=anonymous>
+<link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel=stylesheet>
+<link rel=stylesheet href=https://codingarchitect-wq.com/css/medium.a3d5489836b19de22a81ddc6bd21c17547d07529e67b266427378a04fa3ea727.css integrity="sha256-o9VImDaxneIqgd3GvSHBdUfQdSnmeyZkJzeKBPo+pyc=">
+<link rel=stylesheet href=https://codingarchitect-wq.com/css/additional.eebcd65102d50347789567f9672176ee8b0cc211a5972ca3d36ce53d6ef5ce2b.css integrity="sha256-7rzWUQLVA0d4lWf5ZyF27osMwhGllyyj02zlPW71zis=">
+<link rel=stylesheet type=text/css href=https://codingarchitect-wq.comcss/asciinema-player.css>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top mediumnavigation nav-down">
+<div class="container pr-0">
+<a class=navbar-brand href=https://codingarchitect-wq.com/>
+<img src=/media/logo.png alt=logo>
+</a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarMediumish aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<div class="collapse navbar-collapse" id=navbarMediumish>
+<ul class="navbar-nav ml-auto">
+<li class=nav-item>
+<a class=nav-link href=/posts>Blog</a>
+</li>
+<li class=nav-item>
+<a class=nav-link href=/>About Me</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<div class=site-content>
+<div class=container>
+<div class=mainheading>
+<h1 class=sitetitle>codingarchitect-wq</h1>
+<p class=lead>
+A technology blog based on the experiences of a hands-on software engineer & architect.
+</p>
+</div><div class=main-content>
+<div class=container>
+<div class=row>
+<div class="col-md-2 pl-0"><div class="share sticky-top sticky-top-offset">
+<p>Share</p>
+<ul>
+<li class="ml-1 mr-1">
+<a target=_blank href="https://twitter.com/intent/tweet?text=Test%20driven%20development%20for%20Infrastructure%20as%20Code%20using%20Pulumi%20and%20Jest&url=https%3a%2f%2fcodingarchitect-wq.com%2fposts%2fpulumi-azure-ts-static-website-tdd%2f" onclick="return window.open(this.href,'twitter-share','width=550,height=435'),!1">
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="ml-1 mr-1">
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3a%2f%2fcodingarchitect-wq.com%2fposts%2fpulumi-azure-ts-static-website-tdd%2f&source=https%3a%2f%2fcodingarchitect-wq.com%2fposts%2fpulumi-azure-ts-static-website-tdd%2f&title=Test%20driven%20development%20for%20Infrastructure%20as%20Code%20using%20Pulumi%20and%20Jest&summary=Test%20driven%20development%20for%20Infrastructure%20as%20Code%20using%20Pulumi%20and%20Jest" target=_blank rel=noopener>
+<i class="fab fa-linkedin"></i>
+</a>
+</li>
+<li class="ml-1 mr-1">
+<a target=_blank href="https://www.xing.com/spi/shares/new?url=https%3a%2f%2fcodingarchitect-wq.com%2fposts%2fpulumi-azure-ts-static-website-tdd%2f" onclick="return window.open(this.href,'xing-share','width=550,height=435'),!1">
+<i class="fab fa-xing"></i>
+</a>
+</li>
+</ul>
+<div class=sep>
+</div>
+<ul>
+<li>
+<a class="small smoothscroll" href=#disqus_thread></a>
+</li>
+</ul>
+</div>
+</div>
+<div class="col-md-9 flex-first flex-md-unordered">
+<div class=mainheading>
+<h1 class=posttitle>Test driven development for Infrastructure as Code using Pulumi and Jest</h1>
+</div>
+<img class="featured-image img-fluid" src=https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/cover.png alt="thumbnail for this post">
+<div class=article-post>
+<h2 id=intro>Intro</h2>
+<p>I was always looking for ways how to apply <a href=https://en.wikipedia.org/wiki/Test-driven_development>TDD</a> while doing Infrastructure as Code development.</p>
+<p>Especially when developing a library of reusable components and the code base increases, regressions become inevitable without proper test coverage.</p>
+<p>When I started with <a href=https://www.terraform.io/>Terraform</a> a couple of years ago, I was missing the possibility to use familiar programming languages and TDD for IaC development.</p>
+<p>Then <a href=https://www.pulumi.com/>Pulumi</a> emerged and delivered on the promise to make IaC development possible with widely used programming languages like Typescript, Go, Python, C#.</p>
+<h2 id=the-goal>The Goal</h2>
+<p>We want to host a static website (also used to host this blog) with a custom domain on Azure in a secure, fast and cost efficient way by using a Storage account with Static Website feature enabled.</p>
+<script defer src=/js/mermaid-beaf30d1e1.min.js></script>
+<script defer src=/js/mermaid-loader-b7fefc76fa.min.js></script>
+<pre class="gblog-mermaid mermaid text-center">
+flowchart LR
+    User(User) -- https://mydomain.com --> CDN(Azure CDN)
+    subgraph Azure
+      CDN --> BlobContainer
+      subgraph StorageAccount
+        BlobContainer --> StaticWebsite(Static Website Content)
+      end
+    end
+    Pulumi -- Provision --> Azure
+    style StorageAccount fill:#59c
+    style Azure fill:#59c
+</pre>
+<p>Pulumi has a great <a href=https://www.pulumi.com/blog/hosting-a-static-website-on-azure-with-pulumi/>tutorial</a> on how to create exactly this, but we want to do it test driven.</p>
+<p>In this post I will be focusing on doing TDD with <a href=https://www.pulumi.com/>Pulumi</a> using <a href=https://www.typescriptlang.org/>Typescript</a> and the <a href=https://jestjs.io/>Jest</a> Framework.</p>
+<pre class="gblog-mermaid mermaid text-center">
+flowchart LR
+    FailingTest(Write a failing test) --> PassingTest(Make the test pass)
+    PassingTest --> Refactor
+    Refactor -->FailingTest
+    style FailingTest fill:#f55
+    style PassingTest fill:#5d5
+    style Refactor fill:#59f
+</pre>
+<p>If you are using <a href=https://mochajs.org/>Mocha</a> as test framework, the same priciples apply and you can have a look at the Mocha config in the Pulumi documentation on <a href=https://www.pulumi.com/docs/guides/testing/unit/>unit testing</a></p>
+<h2 id=lets-go>Let&rsquo;s go!</h2>
+<p>First, let&rsquo;s create a new pulumi project:</p>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=1692f7dc-2>
+<span>Optional: pulumi local login - click to expand</span>
+<span>↕</span>
+</label>
+<input id=1692f7dc-2 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+Run <code>pulumi login --local</code> if you want to use your local drive instead of Pulumi.com for storing the pulumi state.
+</div>
+</div>
+<pre tabindex=0><code>pulumi new azure-typescript --dir pulumi-azure-ts-jest-static-website-tdd
+cd pulumi-azure-ts-jest-static-website-tdd
+</code></pre><p>
+<asciinema-player src=/casts/pulumi-azure-ts-static-website-tdd/create-pulumi-project.cast cols=640 rows=15 preload=1 start-at=0 speed=1 idle-time-limit=2></asciinema-player>
+</p>
+<p>The Pulumi new project template will generate some code in the <code>index.ts</code> file.</p>
+<p>Let&rsquo;s delete that generated code so we have a clean start.</p>
+<p><img src=/images/delete-generated-code-before.png alt="Before deleting Pulumi generated code"></p>
+<p><img src=/images/delete-generated-code-after.png alt="After deleting Pulumi generated code"></p>
+<p>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=753a536e-4>
+<span>Optional: Init git repository - click to expand</span>
+<span>↕</span>
+</label>
+<input id=753a536e-4 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<pre tabindex=0><code>git init
+git status
+git add .
+git commit -m &quot;add pulumi project&quot;
+</code></pre><p>
+<asciinema-player src=/casts/pulumi-azure-ts-static-website-tdd/init-git.cast cols=640 rows=15 <pre><code> preload="1"
+start-at="0"
+speed="1"
+idle-time-limit="2"
+>&lt;/asciinema-player>
+</code></pre>
+</p>
+</div>
+</div>
+<br></p>
+<h2 id=open-the-project-in-visual-studio-code>Open the project in Visual Studio Code</h2>
+<p>I use <a href=https://code.visualstudio.com/>Visual Studio Code</a> as an IDE, let&rsquo;s open our project using it.</p>
+<pre tabindex=0><code>code .
+</code></pre><br>
+<h2 id=prepare-for-writing-our-tests>Prepare for writing our tests</h2>
+<p>Before we can start writing our first test, we need to setup <code>Jest</code> for Typescript.</p>
+<p><code>ts-jest</code> is a TypeScript preprocessor for jest, that lets you use jest to test projects written in TypeScript.</p>
+<p>But first we need to install some additional dependencies for this. We need <code>jest</code>, <code>ts-jest</code> and the typings for jest because jest is written in JavaScript. For this we enter the following command:</p>
+<pre tabindex=0><code>npm i -D jest ts-jest @types/jest
+</code></pre><p>
+<asciinema-player src=/casts/pulumi-azure-ts-static-website-tdd/install-dependencies.cast cols=640 rows=15 preload=1 start-at=0 speed=1 idle-time-limit=2></asciinema-player>
+</p>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=14265838-6>
+<span>Optional: git commit - add jest and ts-jest dependencies - click to expand</span>
+<span>↕</span>
+</label>
+<input id=14265838-6 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<pre tabindex=0><code>git status
+git commit -am &quot;add jest and ts-jest dependencies&quot;
+</code></pre><p>
+<asciinema-player src=/casts/pulumi-azure-ts-static-website-tdd/git-commit-jest-dependency.cast cols=640 rows=15 <pre><code> preload="1"
+start-at="0"
+speed="1.5"
+idle-time-limit="2"
+>&lt;/asciinema-player>
+</code></pre>
+</p>
+</div>
+</div>
+<p>Next, we need to tell jest that we want to use <code>ts-jest</code> as a preprocessor. For this we let <code>ts-jest</code> create a configuration file with the following command:</p>
+<p><code>npx ts-jest config:init</code></p>
+<p>
+<asciinema-player src=/casts/pulumi-azure-ts-static-website-tdd/init-jest.cast cols=640 rows=5 preload=1 start-at=0 speed=1 idle-time-limit=2></asciinema-player>
+</p>
+<p>This will create a file named <code>jest.config.js</code> with a setting for <code>jest</code> to use the preprocessor <code>js-test</code>.</p>
+<p><img src=/images/jest-config.png alt="Jest config"></p>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=96bc8ad3-8>
+<span>Optional: git commit - init jest config - click to expand</span>
+<span>↕</span>
+</label>
+<input id=96bc8ad3-8 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<pre tabindex=0><code>git status
+git add jest.config.js
+git commit -m &quot;init jest config&quot;
+</code></pre>
+</div>
+</div>
+<br>
+<h2 id=add-build-and-unit-test-commands>Add build and unit-test commands</h2>
+<p>We still need to add some commands in our package.json, so that npm knows how to build the project and how to run the unit tests.</p>
+<p>Add the following command to the package.json:</p>
+<pre tabindex=0><code>&quot;scripts&quot;: {
+    &quot;build&quot;: &quot;tsc&quot;,
+    &quot;unit-tests&quot;: &quot;jest&quot;
+}
+</code></pre><p><img src=/images/build-and-unit-tests-npm-commands.png alt="build and unit-tests commands"></p>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=e772fb7e-9>
+<span>Optional: git commit - add build and unit-tests commands - click to expand</span>
+<span>↕</span>
+</label>
+<input id=e772fb7e-9 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<pre tabindex=0><code>git status
+git add .
+git commit -m &quot;add build and unit-tests commands&quot;
+</code></pre>
+</div>
+</div>
+<br>
+<h2 id=how-pulumi-mocks-work>How Pulumi Mocks work</h2>
+<p>Pulumi Runtime exposes a way to intercept calls to the provider and mock the results on new resource constructor call (e.g. new azure.storage.Account) and provider function call (e.g. aws.get_availability_zones).</p>
+<pre class="gblog-mermaid mermaid text-center">
+flowchart TB
+  subgraph LanguageHost
+    index.test.js --> index.ts
+  end    
+  index.ts -- 1. new Resource --> PulumiEngine
+
+  subgraph Providers
+    direction TB
+    Azure
+    AWS
+    Kubernetes 
+  end
+  PulumiEngine(Pulumi Engine) -- 2. Create/Call --> PulumiMocks(PulumiMocks)
+  PulumiMocks -- X --> Providers
+  PulumiMocks -- 3. Return Mocks --> PulumiEngine
+  PulumiEngine -- 4. Return Mocks --> index.ts
+  linkStyle 3 stroke-width:2px,fill:none,stroke:red;
+  linkStyle 4 stroke-width:2px,fill:none,stroke:blue;
+  linkStyle 5 stroke-width:2px,fill:none,stroke:blue
+</pre>
+<p><blockquote class="gblog-hint info">
+<strong>When Pulumi Mocks are not enough</strong><br>
+There might be cases where Pulumi runtime mocks are not sufficient. E.g. we have a custom component with child resources and we want to assert them or we want to mock an external module over which we have no control. For that we can use the jest mocking capabilities <a href=https://jestjs.io/docs/mock-functions>https://jestjs.io/docs/mock-functions</a>
+</blockquote>
+<br></p>
+<h2 id=writing-our-first-tests->Writing our first tests 🎉</h2>
+<p>Now that we understood how Pulumi Mocks work, we are ready to start writing our tests.</p>
+<pre tabindex=0><code>mkdir tests
+touch tests/static-website.test.ts
+</code></pre><p>
+<asciinema-player src=/casts/pulumi-azure-ts-static-website-tdd/add-first-test.cast cols=640 rows=5 preload=1 start-at=0 speed=1.5 idle-time-limit=2></asciinema-player>
+</p>
+<p>Open <code>static-website.test.ts</code> and add the following code to setup the mocks:</p>
+<pre tabindex=0><code>import * as pulumi from &quot;@pulumi/pulumi&quot;;
+
+pulumi.runtime.setMocks({
+    newResource: function(args: pulumi.runtime.MockResourceArgs): {id: string, state: any} {
+        return {
+            id: args.inputs.name + &quot;_id&quot;,
+            state: args.inputs,
+        };
+    },
+    call: function(args: pulumi.runtime.MockCallArgs) {
+        return args.inputs;
+    },
+});
+</code></pre><p>Pulumi will invoke:</p>
+<ul>
+<li><code>newResource</code> on each Resource Constructor and return a mocked resource with:
+<ul>
+<li><code>id</code> in the format <code>args.inputs.name + "_id"</code></li>
+<li><code>state</code> that will contain all the inputs of that resource, so we will be able to assert on their values.</li>
+</ul>
+</li>
+<li><code>call</code> on each provider function call and return the inputs that were given.</li>
+</ul>
+<h3 id=loading-the-infrastructure-under-test>Loading the Infrastructure under Test</h3>
+<p><blockquote class="gblog-hint warning">
+We have to ensure loading our infrastructure code from index.ts before any tests but after the mocks are defined.
+</blockquote>
+Add the following code after the <code>pulumi.runtime.setMocks</code> block.</p>
+<pre tabindex=0><code>describe(&quot;When provisioning a static website&quot;, () =&gt; {
+    let infra: typeof import(&quot;../index&quot;);
+
+    beforeAll(async function() {
+        // It's important to import the program _after_ the mocks are defined.
+        infra = await import(&quot;../index&quot;);
+    })
+});
+</code></pre><p>Run npm build to validate everything is setup correctly:</p>
+<pre tabindex=0><code>npm run build
+</code></pre><p><strong>Test1:</strong> One of the requirements is to host the static website in a Storage Account, so let&rsquo;s test that our code creates a storage account.</p>
+<pre tabindex=0><code>describe(&quot;When provisioning a static website&quot;, () =&gt; {
+    ...
+
+    it(&quot;A storage account should be created&quot;, () =&gt; {
+        expect(infra.storageAccount).toBeDefined();
+    });
+});
+</code></pre><p>Run the tests:</p>
+<pre tabindex=0><code>npm run unit-tests
+</code></pre><p>
+<asciinema-player src=/casts/pulumi-azure-ts-static-website-tdd/run-first-test-fails.cast cols=640 rows=20 preload=1 start-at=0 speed=1.5 idle-time-limit=2></asciinema-player>
+</p>
+<p>The test fails as expected, now we come into the TDD cycle, so let&rsquo;s write enough code to pass the test. Add the following code to create a resource group and a storage account to index.ts:</p>
+<pre tabindex=0><code>import * as azure_native from &quot;@pulumi/azure-native&quot;;
+
+const rg = new azure_native.resources.ResourceGroup(&quot;static-website-rg&quot;);
+
+export const storageAccount = new azure_native.storage.StorageAccount(&quot;staticwebsite&quot;, {
+    resourceGroupName: rg.name,
+    sku: {
+        name: azure_native.storage.SkuName.Standard_ZRS
+    },
+    kind: azure_native.storage.Kind.StorageV2,
+});
+</code></pre><p><img src=/images/run-first-test-success.png alt="run first test success"></p>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=fba8a3e6-15>
+<span>Hint: Make tests run faster - click to expand</span>
+<span>↕</span>
+</label>
+<input id=fba8a3e6-15 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<p>Jest typescript tests run by default incredibly slow.</p>
+<p>Add the following to the <code>jest.config.js</code> to make them run a lot faster.</p>
+<p>Enabling isolatedModules makes the tests run much faster but turns type checking off, which should not be a problem.</p>
+<pre tabindex=0><code>globals: {
+    &quot;ts-jest&quot;: {
+      isolatedModules: true,
+    },
+  },
+</code></pre><p><img src=/images/jest-isolatedModules.png alt="jest isolatedModules"></p>
+</div>
+</div>
+<p><strong>Test2:</strong> Let&rsquo;s add a test for making sure the storage account only allows https traffic</p>
+<pre tabindex=0><code>it(&quot;The storage account should only allow https traffic&quot;, function (done) {
+  infra.storageAccount.enableHttpsTrafficOnly.apply(enableHttpsTrafficOnly =&gt; {
+    if (!enableHttpsTrafficOnly) {
+      done(new Error(`storageAccount.enableHttpsTrafficOnly should be true`));
+    } else {
+      done();
+    }
+  });
+});
+</code></pre><blockquote class="gblog-hint info">
+<code>enableHttpsTrafficOnly</code> is an output property, thus we need to use the apply method to get access to its value. Since all outputs are resolved asynchronously, we need to use the framework’s built-in asynchronous test capability.
+</blockquote>
+<p>Also this test will initially fail, to make it pass add <code>enableHttpsTrafficOnly: true</code> to the storage account parameters in `index.ts``</p>
+<p><strong>Test3:</strong> Check that a StorageAccountStaticWebsite is created</p>
+<pre tabindex=0><code>it(&quot;A Storage Account Static Website should be created&quot;, () =&gt; {
+  expect(infra.staticWebsite).toBeDefined();
+});
+</code></pre><p>and the code to pass the test:</p>
+<pre tabindex=0><code>export const staticWebsite = new azure_native.storage.StorageAccountStaticWebsite(&quot;staticWebsite&quot;, {
+    accountName: storageAccount.name,
+    resourceGroupName: rg.name,
+    indexDocument: &quot;index.html&quot;,
+    error404Document: &quot;404.html&quot;,
+});
+</code></pre><p><strong>Test4:</strong> Check that the StorageAccountStaticWebsite is using correct StorageAccount
+&mdash; to be continued &mdash;</p>
+</div>
+<div class=after-post-tags>
+<ul class=tags>
+<li>
+<a href=/tags/test-driven-development>Test Driven Development</a>
+</li>
+<li>
+<a href=/tags/infrastructure-as-code>Infrastructure as Code</a>
+</li>
+<li>
+<a href=/tags/pulumi>Pulumi</a>
+</li>
+<li>
+<a href=/tags/jest>Jest</a>
+</li>
+<li>
+<a href=/tags/static-website-hosting>Static Website Hosting</a>
+</li>
+<li>
+<a href=/tags/azure>Azure</a>
+</li>
+</ul>
+</div>
+<div class="row PageNavigation d-flex justify-content-between font-weight-bold">
+<div class=clearfix></div>
+</div>
+</div>
+</div>
+</div>
+<div class=container>
+<div id=comments class="row justify-content-center mb-5">
+<div class=col-md-8>
+<div id=disqus_thread></div>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//codingarchitect-wq.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jumbotron fortags">
+<div class="d-md-flex h-100">
+<div class="col-md-4 transpdark align-self-center text-center h-100">
+<div class="d-md-flex align-items-center justify-content-center h-100">
+<h2 class="d-md-block d-none align-self-center py-1 font-weight-light">Explore <span class="d-none d-md-inline">→</span></h2>
+</div>
+</div>
+<div class="col-md-8 p-5 align-self-center text-center">
+<a class="mt-1 mb-1" href=/tags/azure>azure</a>
+<a class="mt-1 mb-1" href=/tags/infrastructure-as-code>infrastructure-as-code</a>
+<a class="mt-1 mb-1" href=/tags/jest>jest</a>
+<a class="mt-1 mb-1" href=/tags/pulumi>pulumi</a>
+<a class="mt-1 mb-1" href=/tags/static-website-hosting>static-website-hosting</a>
+<a class="mt-1 mb-1" href=/tags/test-driven-development>test-driven-development</a>
+</div>
+</div>
+</div>
+<footer class=footer>
+<div class=container>
+<div class=row>
+<div class="col-md col-sm text-center text-lg-left">
+&copy; Copyright Alexandru Prian - All rights reserved
+</div>
+<div class="col-md col-sm text-center text-lg-center">
+Built with <a href=https://gohugo.io/>Hugo</a> and ❤︎
+</div>
+<div class="col-md col-sm text-center text-lg-right">
+<a target=_blank rel=noopener href=https://www.wowthemes.net>Mediumish Theme</a> by WowThemes.net
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=https://code.jquery.com/jquery-3.4.1.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js integrity=sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut crossorigin=anonymous></script>
+<script src=https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js integrity=sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM crossorigin=anonymous></script>
+<script src=https://codingarchitect-wq.com/js/mediumish.84218587c174fd40bce82544b98851670f0b124a7324b349c54a4065e2b32ffc.js integrity="sha256-hCGFh8F0/UC86CVEuYhRZw8LEkpzJLNJxUpAZeKzL/w="></script>
+<script src=https://codingarchitect-wq.comjs/asciinema-player.js></script>
+</body>
+</html>
