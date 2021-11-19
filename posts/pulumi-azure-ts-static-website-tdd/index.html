@@ -15,7 +15,7 @@ Especially when developing a library of reusable components and the code base in
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/"><meta property="og:image" content="https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/cover.png"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2021-10-24T20:00:00+01:00">
-<meta property="article:modified_time" content="2021-11-18T16:28:47+01:00">
+<meta property="article:modified_time" content="2021-11-19T22:41:55+01:00">
 <link href=https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css rel=stylesheet integrity=sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T crossorigin=anonymous>
 <link rel=stylesheet href=https://use.fontawesome.com/releases/v5.0.13/css/all.css integrity=sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp crossorigin=anonymous>
 <link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel=stylesheet>
@@ -123,13 +123,16 @@ flowchart LR
 </pre>
 <p>If you are using <a href=https://mochajs.org/>Mocha</a> as test framework, the same priciples apply and you can have a look at the Mocha config in the Pulumi documentation on <a href=https://www.pulumi.com/docs/guides/testing/unit/>unit testing</a></p>
 <h2 id=lets-go>Let&rsquo;s go!</h2>
+<blockquote class="gblog-hint info">
+The complete source code for the article can be found on GitHub: <a href=https://github.com/codingarchitect-wq/pulumi-azure-ts-jest-static-website-tdd>https://github.com/codingarchitect-wq/pulumi-azure-ts-jest-static-website-tdd</a>
+</blockquote>
 <p>First, let&rsquo;s create a new pulumi project:</p>
 <div class=gblog-expand>
-<label class="gblog-expand__head flex justify-between" for=1692f7dc-2>
+<label class="gblog-expand__head flex justify-between" for=1692f7dc-3>
 <span>Optional: pulumi local login - click to expand</span>
 <span>↕</span>
 </label>
-<input id=1692f7dc-2 type=checkbox class="gblog-expand__control hidden">
+<input id=1692f7dc-3 type=checkbox class="gblog-expand__control hidden">
 <div class="gblog-markdown--nested gblog-expand__content">
 Run <code>pulumi login --local</code> if you want to use your local drive instead of Pulumi.com for storing the pulumi state.
 </div>
@@ -276,11 +279,11 @@ export const storageAccount = new azure_native.storage.StorageAccount(&quot;stat
 });
 </code></pre><p><img src=/images/run-first-test-success.png alt="run first test success"></p>
 <div class=gblog-expand>
-<label class="gblog-expand__head flex justify-between" for=fba8a3e6-11>
+<label class="gblog-expand__head flex justify-between" for=fba8a3e6-12>
 <span>Hint: Make tests run faster - click to expand</span>
 <span>↕</span>
 </label>
-<input id=fba8a3e6-11 type=checkbox class="gblog-expand__control hidden">
+<input id=fba8a3e6-12 type=checkbox class="gblog-expand__control hidden">
 <div class="gblog-markdown--nested gblog-expand__content">
 <p>Jest typescript tests run by default incredibly slow.</p>
 <p>Add the following to the <code>jest.config.js</code> to make them run a lot faster.</p>
