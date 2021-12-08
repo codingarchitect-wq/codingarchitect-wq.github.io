@@ -7,15 +7,15 @@
 <meta name=twitter:card content="summary_large_image">
 <meta name=twitter:image content="https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/cover.png">
 <meta name=twitter:title content="Test driven development for Infrastructure as Code using Pulumi and Jest">
-<meta name=twitter:description content="Intro I was always looking for ways how to apply TDD while doing Infrastructure as Code development.
+<meta name=twitter:description content="I was always looking for ways to apply TDD while doing Infrastructure as Code development.
 Especially when developing a library of reusable components and the code base increases, regressions become inevitable without proper test coverage.">
 <meta property="og:title" content="Test driven development for Infrastructure as Code using Pulumi and Jest">
-<meta property="og:description" content="Intro I was always looking for ways how to apply TDD while doing Infrastructure as Code development.
+<meta property="og:description" content="I was always looking for ways to apply TDD while doing Infrastructure as Code development.
 Especially when developing a library of reusable components and the code base increases, regressions become inevitable without proper test coverage.">
 <meta property="og:type" content="article">
 <meta property="og:url" content="https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/"><meta property="og:image" content="https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/cover.png"><meta property="article:section" content="posts">
 <meta property="article:published_time" content="2021-10-24T20:00:00+01:00">
-<meta property="article:modified_time" content="2021-12-08T12:58:49+01:00">
+<meta property="article:modified_time" content="2021-12-08T21:22:02+01:00">
 <link href=https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css rel=stylesheet integrity=sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T crossorigin=anonymous>
 <link rel=stylesheet href=https://use.fontawesome.com/releases/v5.0.13/css/all.css integrity=sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp crossorigin=anonymous>
 <link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel=stylesheet>
@@ -89,8 +89,7 @@ A technology blog based on the experiences of a hands-on software engineer & arc
 </div>
 <img class="featured-image img-fluid" src=https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/cover.png alt="thumbnail for this post">
 <div class=article-post>
-<h2 id=intro>Intro</h2>
-<p>I was always looking for ways how to apply <a href=https://en.wikipedia.org/wiki/Test-driven_development>TDD</a> while doing Infrastructure as Code development.</p>
+<p>I was always looking for ways to apply <a href=https://en.wikipedia.org/wiki/Test-driven_development>TDD</a> while doing Infrastructure as Code development.</p>
 <p>Especially when developing a library of reusable components and the code base increases, regressions become inevitable without proper test coverage.</p>
 <p>When I started with <a href=https://www.terraform.io/>Terraform</a> a couple of years ago, I was missing the possibility to use familiar programming languages and TDD for IaC development.</p>
 <p>Then <a href=https://www.pulumi.com/>Pulumi</a> emerged and delivered on the promise to make IaC development possible with widely used programming languages like Typescript, Go, Python, C#.</p>
@@ -146,9 +145,9 @@ cd pulumi-azure-ts-jest-static-website-tdd
 <p>The Pulumi new project template will generate some code in the <code>index.ts</code> file.</p>
 <p>Let&rsquo;s delete that generated code so we have a clean start.</p>
 <p>Before:
-<img src=/images/delete-generated-code-before.png alt="Before deleting Pulumi generated code">
+<img src=/images/pulumi-azure-ts-static-website-tdd/delete-generated-code-before.png alt="Before deleting Pulumi generated code">
 After:
-<img src=/images/delete-generated-code-after.png alt="After deleting Pulumi generated code">
+<img src=/images/pulumi-azure-ts-static-website-tdd/delete-generated-code-after.png alt="After deleting Pulumi generated code">
 <br><br></p>
 <h2 id=open-the-project-in-visual-studio-code>Open the project in Visual Studio Code</h2>
 <p>I use <a href=https://code.visualstudio.com/>Visual Studio Code</a> as an IDE, let&rsquo;s open our project using it.</p>
@@ -168,7 +167,7 @@ After:
 <asciinema-player src=/casts/pulumi-azure-ts-static-website-tdd/init-jest.cast cols=640 rows=5 preload=1 start-at=0 speed=1 idle-time-limit=2></asciinema-player>
 </p>
 <p>This will create a file named <code>jest.config.js</code> with a setting for <code>jest</code> to use the preprocessor <code>js-test</code>.</p>
-<p><img src=/images/jest-config.png alt="Jest config">
+<p><img src=/images/pulumi-azure-ts-static-website-tdd/jest-config.png alt="Jest config">
 <br><br></p>
 <h2 id=add-build-and-unit-test-commands>Add build and unit-test commands</h2>
 <p>We still need to add some commands in our package.json, so that npm knows how to build the project and how to run the unit tests.</p>
@@ -177,7 +176,7 @@ After:
     &quot;build&quot;: &quot;tsc&quot;,
     &quot;unit-tests&quot;: &quot;jest&quot;
 }
-</code></pre><p><img src=/images/build-and-unit-tests-npm-commands.png alt="build and unit-tests commands">
+</code></pre><p><img src=/images/pulumi-azure-ts-static-website-tdd/build-and-unit-tests-npm-commands.png alt="build and unit-tests commands">
 <br><br></p>
 <h2 id=how-pulumi-mocks-work>How Pulumi Mocks work</h2>
 <p>Pulumi Runtime exposes a way to intercept calls to the provider and mock the results on new resource constructor call (e.g. new azure.storage.Account) and provider function call (e.g. aws.get_availability_zones).</p>
@@ -278,13 +277,13 @@ export const storageAccount = new azure_native.storage.StorageAccount(&quot;stat
     },
     kind: azure_native.storage.Kind.StorageV2,
 });
-</code></pre><p><img src=/images/run-first-test-success.png alt="run first test success"></p>
+</code></pre><p><img src=/images/pulumi-azure-ts-static-website-tdd/run-first-test-success.png alt="run first test success"></p>
 <div class=gblog-expand>
-<label class="gblog-expand__head flex justify-between" for=fba8a3e6-12>
+<label class="gblog-expand__head flex justify-between" for=4fbc4057-12>
 <span>Hint: Make tests run faster - click to expand</span>
 <span>↕</span>
 </label>
-<input id=fba8a3e6-12 type=checkbox class="gblog-expand__control hidden">
+<input id=4fbc4057-12 type=checkbox class="gblog-expand__control hidden">
 <div class="gblog-markdown--nested gblog-expand__content">
 <p>Jest typescript tests run by default incredibly slow.</p>
 <p>Add the following to the <code>jest.config.js</code> to make them run a lot faster.</p>
@@ -294,7 +293,7 @@ export const storageAccount = new azure_native.storage.StorageAccount(&quot;stat
       isolatedModules: true,
     },
   },
-</code></pre><p><img src=/images/jest-isolatedModules.png alt="jest isolatedModules"></p>
+</code></pre><p><img src=/images/pulumi-azure-ts-static-website-tdd/jest-isolatedModules.png alt="jest isolatedModules"></p>
 </div>
 </div>
 <p><strong>Test2:</strong> Let&rsquo;s add a test for making sure the storage account only allows https traffic</p>
