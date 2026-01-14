@@ -1,0 +1,964 @@
+<!doctype html><html lang=en-us><head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
+<meta name=generator content="Hugo 0.88.1">
+<link rel=icon href=/media/logo.png>
+<title>Secure env secrets with XSOPS, SOPS, GPG, Yubikey and Azure Key Vault | codingarchitect-wq</title>
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://codingarchitect-wq.com/favicon/android-chrome-512x512.png">
+<meta name=twitter:title content="Secure env secrets with XSOPS, SOPS, GPG, Yubikey and Azure Key Vault">
+<meta name=twitter:description content="AI coding agents have improved a lot lately and I use them more and more in autonomous mode to help with coding tasks.
+While this is a great productivity booster, it also raises security concerns, especially when it comes to managing application secrets like API keys, database credentials, and other sensitive information, as the agents might inadvertently expose these secrets in logs or code snippets or in calls home to their servers.">
+<meta property="og:title" content="Secure env secrets with XSOPS, SOPS, GPG, Yubikey and Azure Key Vault">
+<meta property="og:description" content="AI coding agents have improved a lot lately and I use them more and more in autonomous mode to help with coding tasks.
+While this is a great productivity booster, it also raises security concerns, especially when it comes to managing application secrets like API keys, database credentials, and other sensitive information, as the agents might inadvertently expose these secrets in logs or code snippets or in calls home to their servers.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://codingarchitect-wq.com/posts/secure-env-sops-gpg-yubikey/"><meta property="og:image" content="https://codingarchitect-wq.com/favicon/android-chrome-512x512.png"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2025-12-05T20:00:00+01:00">
+<meta property="article:modified_time" content="2026-01-14T22:52:23+01:00">
+<link href=https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css rel=stylesheet integrity=sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T crossorigin=anonymous>
+<link rel=stylesheet href=https://use.fontawesome.com/releases/v5.0.13/css/all.css integrity=sha384-DNOHZ68U8hZfKXOrtjWvjxusGo9WQnrNx2sqG0tfsghAvtVlRW3tvkXWZh58N9jp crossorigin=anonymous>
+<link href="https://fonts.googleapis.com/css?family=Righteous%7CMerriweather:300,300i,400,400i,700,700i" rel=stylesheet>
+<link rel=stylesheet href=https://codingarchitect-wq.com/css/medium.a3d5489836b19de22a81ddc6bd21c17547d07529e67b266427378a04fa3ea727.css integrity="sha256-o9VImDaxneIqgd3GvSHBdUfQdSnmeyZkJzeKBPo+pyc=">
+<link rel=stylesheet href=https://codingarchitect-wq.com/css/additional.eebcd65102d50347789567f9672176ee8b0cc211a5972ca3d36ce53d6ef5ce2b.css integrity="sha256-7rzWUQLVA0d4lWf5ZyF27osMwhGllyyj02zlPW71zis=">
+<link rel=stylesheet type=text/css href=https://codingarchitect-wq.com/css/asciinema-player.css>
+<script src=https://codingarchitect-wq.com/js/posthog.js></script>
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top mediumnavigation nav-down">
+<div class="container pr-0">
+<a class=navbar-brand href=https://codingarchitect-wq.com/>
+<img src=/media/logo.png alt=logo>
+</a>
+<button class=navbar-toggler type=button data-toggle=collapse data-target=#navbarMediumish aria-controls=navbarSupportedContent aria-expanded=false aria-label="Toggle navigation">
+<span class=navbar-toggler-icon></span>
+</button>
+<div class="collapse navbar-collapse" id=navbarMediumish>
+<ul class="navbar-nav ml-auto">
+<li class=nav-item>
+<a class=nav-link href=/posts>Blog</a>
+</li>
+<li class=nav-item>
+<a class=nav-link href=/>About Me</a>
+</li>
+</ul>
+</div>
+</div>
+</nav>
+<div class=site-content>
+<div class=container>
+<div class=mainheading>
+<h1 class=sitetitle>codingarchitect-wq</h1>
+<p class=lead>
+A technology blog based on the experiences of a hands-on software engineer & architect.
+</p>
+</div><div class=main-content>
+<div class=container>
+<div class=row>
+<div class="col-md-2 pl-0"><div class="share sticky-top sticky-top-offset">
+<p>Share</p>
+<ul>
+<li class="ml-1 mr-1">
+<a target=_blank href="https://twitter.com/intent/tweet?text=Secure%20env%20secrets%20with%20XSOPS%2c%20SOPS%2c%20GPG%2c%20Yubikey%20and%20Azure%20Key%20Vault&url=https%3a%2f%2fcodingarchitect-wq.com%2fposts%2fsecure-env-sops-gpg-yubikey%2f" onclick="return window.open(this.href,'twitter-share','width=550,height=435'),!1">
+<i class="fab fa-twitter"></i>
+</a>
+</li>
+<li class="ml-1 mr-1">
+<a href="https://www.linkedin.com/shareArticle?mini=true&url=https%3a%2f%2fcodingarchitect-wq.com%2fposts%2fsecure-env-sops-gpg-yubikey%2f&source=https%3a%2f%2fcodingarchitect-wq.com%2fposts%2fsecure-env-sops-gpg-yubikey%2f&title=Secure%20env%20secrets%20with%20XSOPS%2c%20SOPS%2c%20GPG%2c%20Yubikey%20and%20Azure%20Key%20Vault&summary=Secure%20env%20secrets%20with%20XSOPS%2c%20SOPS%2c%20GPG%2c%20Yubikey%20and%20Azure%20Key%20Vault" target=_blank rel=noopener>
+<i class="fab fa-linkedin"></i>
+</a>
+</li>
+<li class="ml-1 mr-1">
+<a target=_blank href="https://www.xing.com/spi/shares/new?url=https%3a%2f%2fcodingarchitect-wq.com%2fposts%2fsecure-env-sops-gpg-yubikey%2f" onclick="return window.open(this.href,'xing-share','width=550,height=435'),!1">
+<i class="fab fa-xing"></i>
+</a>
+</li>
+</ul>
+<div class=sep>
+</div>
+<ul>
+<li>
+<a class="small smoothscroll" href=#disqus_thread></a>
+</li>
+</ul>
+</div>
+</div>
+<div class="col-md-9 flex-first flex-md-unordered">
+<div class=mainheading>
+<h1 class=posttitle>Secure env secrets with XSOPS, SOPS, GPG, Yubikey and Azure Key Vault</h1>
+</div>
+<div class=article-post>
+<p>AI coding agents have improved a lot lately and I use them more and more in autonomous mode to help with coding tasks.</p>
+<p>While this is a great productivity booster, it also raises security concerns, especially when it comes to managing application secrets like API keys, database credentials, and other sensitive information, as the agents might inadvertently expose these secrets in logs or code snippets or in calls home to their servers.</p>
+<p>Also recently there have been various supply chain attacks, so I started looking for a more secure way to manage the secrets in my projects.</p>
+<h2 id=table-of-contents>Table of Contents</h2>
+<ul>
+<li><a href=#tldr>TLDR</a></li>
+<li><a href=#the-goal>The Goal</a></li>
+<li><a href=#the-research>The Research</a></li>
+<li><a href=#the-solution>The Solution</a>
+<ul>
+<li><strong>Phase 1: Hardware & Key Setup (~30 min)</strong>
+<ul>
+<li><a href=#yubikey-setup-for-gpg-10-min>YubiKey Setup for GPG</a></li>
+<li><a href=#generating-gpg-keys-and-transferring-them-to-yubikey-15-min>Generating GPG Keys and Transferring to YubiKey</a></li>
+<li><a href=#enable-touch-requirement-with-caching-on-yubikey-for-openpgp-keys-2-min>Enable Touch Requirement on YubiKey</a></li>
+<li><a href=#generate-gpg-keys-for-all-team-members-and-provide-them-with-yubikeys>Setup each team member</a></li>
+<li><a href=#configure-azure-key-vault-encryption-key>Azure Key Vault Configuration</a></li>
+</ul>
+</li>
+<li><strong>Phase 2: Project Configuration (~15 min)</strong>
+<ul>
+<li><a href=#install-sops-and-xsops-5-min>Install SOPS and XSOPS</a></li>
+<li><a href=#project-structure-5-min-per-project>Project Structure</a></li>
+<li><a href=#create-a-sops-configuration-file-in-each-project>SOPS Configuration</a></li>
+<li><a href=#create-and-encrypt-secret-files>Encrypting Secrets</a></li>
+</ul>
+</li>
+<li><strong>Phase 3: Daily Usage</strong>
+<ul>
+<li><a href=#using-xsops-to-run-your-application-with-decrypted-secrets>Running with XSOPS</a></li>
+<li><a href=#cicd-integration>CI/CD Integration</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href=#verification>Verification</a></li>
+<li><a href=#troubleshooting>Troubleshooting</a></li>
+<li><a href=#quick-reference-card>Quick Reference Card</a></li>
+</ul>
+<h2 id=tldr>TLDR</h2>
+<script defer src=/js/mermaid-beaf30d1e1.min.js></script>
+<script defer src=/js/mermaid-loader-b7fefc76fa.min.js></script>
+<pre class="gblog-mermaid mermaid">
+flowchart LR
+    subgraph Command Process
+        F[Command with injected env vars<br>containing decrypted secrets]
+    end
+    subgraph Developer / CI/CD / Application
+        A[xsops run dev -- command]
+    end
+    subgraph Decryption
+        B[SOPS]
+    end
+    subgraph Keys
+        C[GPG on YubiKey<br>PIN and touch YubiKey needed<br>touch cached for 15s]
+        D[Azure Key Vault]
+    end
+    subgraph Encrypted Secrets Files
+        E[secrets/dev/env.yaml<br>in Git - encrypted]
+    end
+
+    A -->|1. calls| B
+    B -->|3.a. decrypts with| C
+    B -->|3.b. decrypts with| D
+    B -->|2. read encrypted secrets| E
+    B -->|4. injects env vars| F
+</pre>
+<p><strong>The toolchain:</strong> XSOPS → SOPS → GPG (on YubiKey) / Azure Key Vault</p>
+<ol>
+<li>Store encrypted secrets in git using SOPS</li>
+<li>Decryption keys live on hardware (YubiKey) or cloud vaults (Azure Key Vault)</li>
+<li>Use XSOPS to inject secrets into your app at runtime, never written to disk or global env</li>
+<li>Works with any language/framework and CI/CD pipelines</li>
+</ol>
+<h2 id=the-goal>The Goal</h2>
+<p>Application secrets are to be stored encrypted in our git repository. The decryption keys should be stored securely on hardware security modules like Yubikey or Vaults like Azure Key Vault, only accessible to authorized developers and CI/CD systems. It should be possible to add/remove keys as developers join or leave the team.</p>
+<p>No plaintext secrets should ever be stored on disk or in the global environment.</p>
+<p>Only when the application is started, the secrets should be decrypted in memory and injected into the application environment.</p>
+<p>The solution should be fairly easy to use and should support all kinds of frameworks and languages and also be usable in CI/CD pipelines.</p>
+<h2 id=the-research>The Research</h2>
+<p>I spent quite some time researching different tools and approaches. Here is what I ended up using:</p>
+<h3 id=the-key-tool-xsops>The Key Tool: XSOPS</h3>
+<p><a href=https://github.com/codingarchitect-wq/xsops>XSOPS</a> is a tool I created to solve this problem. It&rsquo;s an opinionated wrapper script around SOPS that:</p>
+<ul>
+<li><strong>Enforces per-environment secrets</strong> with a standard project structure</li>
+<li><strong>Injects secrets at runtime only</strong>—they never touch disk or leak to your global shell</li>
+<li><strong>Works with any command</strong>—just prefix with <code>xsops run &lt;env> --</code>
+<ul>
+<li>It relies on the <code>sops exec-env</code> command to decrypt secrets on-the-fly and pass them to the command being run. See the <a href="https://github.com/getsops/sops?tab=readme-ov-file#passing-secrets-to-other-processes">SOPS exec-env documentation</a> for more details.</li>
+</ul>
+</li>
+<li><strong>View decrypted secrets without</strong> creating temporary files</li>
+<li><strong>Edit encrypted secrets</strong> in your default editor</li>
+<li><strong>Work from any subdirectory of your project</strong>: the script finds the project root and secret files automatically</li>
+</ul>
+<p>Secrets never leak into your global shell&rsquo;s environment or history; they&rsquo;re only available to the command you run.</p>
+<p>What makes it different from just using SOPS directly? It simplifies usage, works from any subdirectory of your project, and avoids creating temporary files or leaving secrets in shell environment or history.</p>
+<h3 id=supporting-tools>Supporting Tools</h3>
+<ul>
+<li><a href=https://github.com/getsops/sops>SOPS</a>: The encryption engine. Supports YAML, JSON, ENV, INI and BINARY formats. Encrypts with AWS KMS, GCP KMS, Azure Key Vault, age, and GPG.</li>
+<li><a href=https://github.com/gpg/gnupg>GPG</a>: GNU Privacy Guard for encryption and signing.</li>
+<li><a href=https://www.yubico.com/products/yubikey-hardware/>YubiKey</a>: Hardware security device that supports storing GPG keys. Private keys never leave the device.</li>
+<li><a href=https://azure.microsoft.com/en-us/services/key-vault/>Azure Key Vault</a>: A cloud service for securely storing and accessing secrets.</li>
+<li>Other vaults like HashiCorp Vault can also be used with SOPS.</li>
+</ul>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=e73f4cb4-1>
+<span>Other tools which I considered but did not use due to missing features - click to expand</span>
+<span>↕</span>
+</label>
+<input id=e73f4cb4-1 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<ul>
+<li><a href=https://github.com/dotenvx/dotenvx>dotenvx</a> - A tool to encrypt/decrypt dotenv files, but it lacks support for hardware security modules. (I created a PR to add GPG support <a href=https://github.com/dotenvx/dotenvx/pull/712>here</a> but am not sure if it will be merged.)</li>
+<li><a href=https://github.com/AGWA/git-crypt>git-crypt</a> - A tool to encrypt files in a git repository, but it does not meet the goal to not store plaintext secrets on disk since it decrypts files when checked out.</li>
+<li><a href=https://github.com/direnv/direnv>direnv</a> - A tool to manage environment variables, but it does not provide encryption or secure storage of secrets. It also loads secrets into environment variables, which is not desired. It could be used in combination with SOPS for decryption, but I wanted a more integrated solution.</li>
+<li><a href=https://github.com/Shopify/ejson>ejson</a> and <a href=https://github.com/Shopify/ejson2env>ejson2env</a> - small libraries to manage encrypted secrets using asymmetric encryption used by Shopify, but it lacks support for hardware security modules and still would store plaintext secrets on disk or in environment variables.</li>
+<li><a href=https://github.com/FiloSottile/age>age</a> or <a href=https://github.com/str4d/rage>rage</a> + <a href=https://github.com/str4d/age-plugin-yubikey>age-plugin-yubikey</a> - modern composable encryption tools, but they lack support for injecting secrets into applications and using secure storage solutions like Azure Key Vault.</li>
+</ul>
+</div>
+</div>
+<h2 id=the-solution>The Solution</h2>
+<p>It is going to be a longer guide, so bear with me. Security is always a trade-off between convenience and safety. But I try to keep it as simple as possible.</p>
+<blockquote>
+<p><strong>Note:</strong> This guide covers the complete setup from YubiKey configuration to CI/CD integration. Each major section can also be referenced independently.</p>
+</blockquote>
+<h3 id=yubikey-setup-for-gpg-10-min>YubiKey setup for GPG (~10 min)</h3>
+<p>YubiKey supports multiple interfaces, including PIV (Personal Identity Verification) for smart card functionality and OpenPGP for GPG keys. These are called applets, and each has its own PINs and configuration, which can be a bit confusing.</p>
+<h4 id=prerequisites>Prerequisites</h4>
+<p>Install these before proceeding:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>macOS</th>
+<th>Ubuntu/Debian</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPG</td>
+<td><code>brew install gnupg</code></td>
+<td><code>apt install gnupg2</code></td>
+<td>Encryption</td>
+</tr>
+<tr>
+<td>YubiKey Manager    </td>
+<td><code>brew install ykman</code>    </td>
+<td><code>apt install yubikey-manager</code>    </td>
+<td>YubiKey config</td>
+</tr>
+<tr>
+<td>scdaemon</td>
+<td>Included with YubiKey Manager</td>
+<td><code>apt install scdaemon</code></td>
+<td>Manage Smart cards daemon</td>
+</tr>
+<tr>
+<td>pcscd</td>
+<td>Included with YubiKey Manager    </td>
+<td><code>apt install pcscd</code>    </td>
+<td>PC/SC Smart Card Daemon</td>
+</tr>
+</tbody>
+</table>
+<p><br>
+Verify installation:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>gpg --version
+ykman --version
+</code></pre></div><br>
+<h4 id=step-1-initialize-yubikey>Step 1: Initialize YubiKey</h4>
+<ol>
+<li>Insert your YubiKey</li>
+<li>Open <a href=https://www.yubico.com/support/download/yubikey-manager/>YubiKey Manager</a> GUI</li>
+<li>Go to <strong>Interfaces</strong> tab → enable <strong>OpenPGP</strong> and <strong>PIV</strong>. PIV enables you to perform RSA or ECC sign/decrypt operations using a private key stored on the smartcard</li>
+<li>Disable other unused applets for security</li>
+<li>Go to <strong>PIV</strong> tab → reset the PIV applet (this does not affect OpenPGP keys)</li>
+<li>Set new PIV PINs. Store them securely, ideally offline or in a Password manager.</li>
+</ol>
+<br>
+<h4 id=step-2-change-openpgp-default-pins>Step 2: Change OpenPGP Default PINs</h4>
+<p>The OpenPGP applet has separate PINs from PIV. Change them immediately:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>gpg --card-edit
+</code></pre></div><p>Then in the GPG prompt:</p>
+<pre tabindex=0><code>gpg/card&gt; admin
+gpg/card&gt; passwd
+</code></pre><table>
+<thead>
+<tr>
+<th>PIN Type</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>User PIN</td>
+<td><code>123456</code></td>
+<td>Required for daily operations (sign/decrypt)</td>
+</tr>
+<tr>
+<td>Admin PIN</td>
+<td><code>12345678</code>    </td>
+<td>Required for key management</td>
+</tr>
+<tr>
+<td>Reset Code    </td>
+<td>(none)</td>
+<td>Used to reset User PIN if locked</td>
+</tr>
+</tbody>
+</table>
+<br>
+<blockquote class="gblog-hint warning">
+<strong>Store PINs securely!</strong> Save these in a password manager or offline storage. If you lose the Admin PIN and lock your User PIN, you&rsquo;ll need to reset the OpenPGP applet (which deletes all keys on the card).
+</blockquote>
+<p>The User PIN will be required each time you use the GPG key stored on the YubiKey to unlock it, then it will be cached for a configurable amount of time, usually 15 seconds. There is also a touch requirement that can be configured to require a physical touch on the YubiKey to use the key, which we will enable later for better security.</p>
+<h4 id=step-3-verify-setup>Step 3: Verify Setup</h4>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>gpg --card-status
+</code></pre></div><p>You should see your YubiKey details including serial number and available key slots.</p>
+<h4 id=gpg-key-generation-approaches>GPG Key Generation Approaches</h4>
+<p>There are two approaches for GPG keys on YubiKey:</p>
+<table>
+<thead>
+<tr>
+<th>Approach</th>
+<th>Pros</th>
+<th>Cons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Generate on YubiKey</td>
+<td>Private key never leaves device</td>
+<td>No backup possible. Lose key, lose access</td>
+</tr>
+<tr>
+<td>Generate on computer, transfer to YubiKey</td>
+<td>Can backup before transfer</td>
+<td>Key briefly exists on computer</td>
+</tr>
+</tbody>
+</table>
+<br>
+<blockquote class="gblog-hint info">
+<strong>This guide uses keys generated on the computer</strong> for backup capability. The private key briefly exists on your computer during generation. Perform this on a trusted, secure machine and delete backups from the computer after storing them safely.
+</blockquote>
+<p>For extensive details, see:</p>
+<ul>
+<li><a href=https://github.com/codingarchitect-wq/YubiKey-Guide>My fork of the YubiKey Guide</a> (based on drduh&rsquo;s comprehensive guide)</li>
+<li><a href=https://support.yubico.com/s/article/Using-Your-YubiKey-with-OpenPGP>Yubico&rsquo;s official GPG documentation</a></li>
+</ul>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=b4c15218-9>
+<span>GPG useful commands - click to expand</span>
+<span>↕</span>
+</label>
+<input id=b4c15218-9 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<ul>
+<li><code>gpg --list-keys --keyid-format=long</code> : List all GPG keys with long key IDs.</li>
+<li><code>gpg --list-secret-keys</code> : List metadata about secret keys, not the secret key material itself.</li>
+<li><code>gpg --edit-key &lt;key-id></code> : Edit a GPG key (replace <key-id> with the actual key ID).</li>
+</ul>
+</div>
+</div>
+<h3 id=generating-gpg-keys-and-transferring-them-to-yubikey-15-min>Generating GPG keys and transferring them to YubiKey (~15 min)</h3>
+<p>We will setup the GPG keys on a computer, backup the keys securely (ideally offline or in a Password manager), and then transfer them to the YubiKey.</p>
+<h4 id=generate-a-new-gpg-key-pair>Generate a new GPG key pair:</h4>
+<pre tabindex=0><code>gpg --full-generate-key
+</code></pre><p>Follow the prompts to select key type, key size, expiration date, and user ID information.</p>
+<p>I used the following settings:</p>
+<ul>
+<li>kind of key
+<ul>
+<li>(9) ECC (sign and encrypt) <em>default</em></li>
+</ul>
+</li>
+<li>elliptic curve name
+<ul>
+<li>(1) Curve 25519 <em>default</em></li>
+</ul>
+</li>
+<li>valid for (I choose 0 for no expiration, but you can choose expiration if desired, then you have to renew the keys later):
+<ul>
+<li>0 = key does not expire</li>
+</ul>
+</li>
+<li>Real name: Your Name</li>
+<li>Email address: <a href=mailto:your.email@example.com>your.email@example.com</a></li>
+<li>Comment: optional comment</li>
+<li>Passphrase: choose a strong passphrase to protect your private key. This passphrase will be required whenever you use the key.</li>
+</ul>
+<p>The result will look something like this:</p>
+<pre tabindex=0><code>public and secret key created and signed.
+
+pub   ed25519 2026-01-05 [SC]
+      19D322F4E80F5522E966C0B38933AF493E0CA254
+uid                      Your Name &lt;your.email@example.com&gt;
+sub   cv25519 2026-01-05 [E]
+</code></pre>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=3fc3c31c-10>
+<span>Understanding GPG key output - click to expand</span>
+<span>↕</span>
+</label>
+<input id=3fc3c31c-10 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<p><strong>Key output explanations:</strong></p>
+<ul>
+<li><code>pub</code> indicates the public key
+<ul>
+<li><code>ed25519</code> is the key type - ed25519 is an elliptic-curve algorithm based on Curve25519</li>
+<li><code>2026-01-05</code> is the creation date</li>
+<li><code>[SC]</code> indicates the key capabilities (Sign and Certify other keys)</li>
+<li><code>19D322F4E80F5522E966C0B38933AF493E0CA254</code> is the long key ID</li>
+</ul>
+</li>
+<li><code>uid</code> is the user ID associated with the key</li>
+<li><code>sub</code> indicates a subkey
+<ul>
+<li><code>cv25519</code> is the subkey type - Curve25519 (a fast elliptic curve for Diffie-Hellman key exchange) for encryption</li>
+<li><code>2026-01-05</code> is the creation date</li>
+<li><code>[E]</code> indicates the subkey capability (Encrypt)</li>
+</ul>
+</li>
+</ul>
+<p><strong>Checking secret keys:</strong></p>
+<pre tabindex=0><code>gpg --list-secret-keys
+</code></pre><p>The result will look something like this:</p>
+<pre tabindex=0><code>sec   ed25519 2026-01-05 [SC]
+    19D322F4E80F5522E966C0B38933AF493E0CA254
+uid           [ultimate] Your Name &lt;your.email@example.com&gt;
+ssb   cv25519 2026-01-05 [E]
+</code></pre><p>Which is similar to the public key listing, but with <code>sec</code> for secret key and <code>ssb</code> for secret subkey.</p>
+</div>
+</div>
+<h4 id=backup-the-generated-keys>Backup the generated keys:</h4>
+<pre tabindex=0><code>gpg --export --armor &lt;key-id&gt; &gt; publickey.asc
+gpg --export-secret-keys --armor &lt;key-id&gt; &gt; privatekey.asc
+</code></pre><blockquote class="gblog-hint danger">
+<strong>Critical:</strong> Store <code>privatekey.asc</code> in a secure offline location or password manager, then <strong>delete it from your computer</strong>. Anyone with this file can decrypt your secrets. This is your only backup. If you lose both the YubiKey and this file, you lose access to your encrypted data permanently.
+</blockquote>
+<h4 id=transfer-the-keys-to-the-yubikey>Transfer the keys to the YubiKey:</h4>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>gpg --edit-key &lt;key-id&gt;
+</code></pre></div><p>In the GPG command prompt, use the following commands:</p>
+<ul>
+<li><code>key 0</code> : Select the primary key (signing and certifying).</li>
+<li><code>keytocard</code> : Transfer the selected key to the YubiKey. Follow the prompts:
+<ul>
+<li>Really move the primary key? (y/N) : y</li>
+<li>Select the slot where to store the key: usually 1 for Signature key</li>
+<li>Enter the passphrase for the key.</li>
+<li>Enter the admin PIN of the YubiKey.</li>
+</ul>
+</li>
+</ul>
+<p>Then repeat for the subkey:</p>
+<ul>
+<li><code>key 1</code> : Select the second subkey (encryption key). It will be marked with an <code>*</code> next to it (e.g. <code>ssb*</code> to show it is selected).</li>
+<li><code>keytocard</code> : Transfer the selected key to the YubiKey. Follow the prompts:
+<ul>
+<li>Select the slot where to store the key: usually 2 for Encryption key</li>
+<li>Enter the passphrase for the key.</li>
+<li>Enter the admin PIN of the YubiKey.</li>
+</ul>
+</li>
+<li><code>save</code> : Save the changes and exit the GPG command prompt.</li>
+</ul>
+<h4 id=verify-the-keys-were-transferred-on-the-yubikey>Verify the keys were transferred on the YubiKey:</h4>
+<pre tabindex=0><code>gpg --card-status
+</code></pre><p>You should see the keys listed under Signature key and Encryption key sections.</p>
+<h4 id=verify-the-keys-are-no-longer-on-the-computer>Verify the keys are no longer on the computer:</h4>
+<pre tabindex=0><code>gpg --list-secret-keys
+</code></pre><p>The output should now show a <code>></code> for the keys stored on the YubiKey, indicating they are no longer on the computer. Also the card serial number should be shown.</p>
+<pre tabindex=0><code>sec&gt;  ed25519 2026-01-05 [SC]
+      19D322F4E80F5522E966C0B38933AF493E0CA254
+      Card serial no. = 0006 12345678
+uid        [ultimate] Your Name &lt;your.email@example.com&gt;
+ssb&gt;  cv25519 2026-01-05 [E]
+</code></pre><p>Any signing/encryption/decryption operation from now on will require the YubiKey to be connected and the user PIN to unlock it + any touch requirement configured.</p>
+<h3 id=enable-touch-requirement-with-caching-on-yubikey-for-openpgp-keys-2-min>Enable touch requirement with caching on YubiKey for OpenPGP keys (~2 min)</h3>
+<blockquote class="gblog-hint ok">
+<strong>Recommended security step!</strong> This adds physical presence verification. Even if malware captures your PIN, it cannot use your keys without you physically touching the YubiKey.
+</blockquote>
+<p>This adds another multi-factor authentication: even if malware captures your PIN, it can&rsquo;t use your keys without physical access to the YubiKey. When enabled, the YubiKey blinks and waits for a physical touch before any cryptographic operation. It will also cache the touch requirement for 15 seconds after use for better usability, otherwise you would have to touch the YubiKey for each operation which can be annoying if you have multiple secrets to decrypt.</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>ykman openpgp keys set-touch dec cached
+ykman openpgp keys set-touch enc cached
+ykman openpgp keys set-touch sig cached
+ykman openpgp keys set-touch aut cached
+</code></pre></div><h4 id=why-cached>Why <code>cached</code>?</h4>
+<table>
+<thead>
+<tr>
+<th>Policy</th>
+<th>Behavior</th>
+<th>Use Case</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Off</code></td>
+<td>No touch required</td>
+<td>Convenience, lower security</td>
+</tr>
+<tr>
+<td><code>On</code></td>
+<td>Touch required every time</td>
+<td>High security, but impractical for batch operations</td>
+</tr>
+<tr>
+<td><code>Fixed</code></td>
+<td>Like <code>On</code>, but can&rsquo;t be disabled without deleting the private key</td>
+<td>Maximum security, can&rsquo;t be changed</td>
+</tr>
+<tr>
+<td><strong><code>Cached</code></strong></td>
+<td>Touch once, valid for 15s</td>
+<td><strong>Best balance</strong>—secure yet practical for decrypting multiple secrets</td>
+</tr>
+<tr>
+<td><code>Cached-Fixed</code></td>
+<td>Like <code>Cached</code>, but can&rsquo;t be disabled without deleting the private key</td>
+<td>High security with usability</td>
+</tr>
+</tbody>
+</table>
+<p><br>
+I recommend <code>Cached</code> because when decrypting environment secrets, SOPS may need multiple decrypt operations. With <code>On</code>, you&rsquo;d need to touch the YubiKey for each secret. With <code>Cached</code>, one touch covers operations within 15 seconds—enough for typical startup scenarios while still requiring physical presence.</p>
+<h3 id=generate-gpg-keys-for-all-team-members-and-provide-them-with-yubikeys>Generate GPG keys for all team members and provide them with YubiKeys</h3>
+<p>Create a GPG key pair for each developer that needs access to the secrets. Store the private keys securely on Yubikeys or other hardware security modules.</p>
+<h3 id=configure-azure-key-vault-encryption-key>Configure Azure Key Vault Encryption Key</h3>
+<p>Set up an Azure Key Vault and create a key for encryption. Grant access to the Key Vault to authorized developers and CI/CD systems using Managed Identity or Service Principals, ideally over Azure RBAC.</p>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=192bac19-14>
+<span>Azure CLI examples - click to expand</span>
+<span>↕</span>
+</label>
+<input id=192bac19-14 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<p><strong>RSA key:</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>az keyvault key create <span class=se>\
+</span><span class=se></span>  --vault-name my-keyvault-12345 <span class=se>\
+</span><span class=se></span>  --name my-kv-key <span class=se>\
+</span><span class=se></span>  --kty RSA <span class=se>\
+</span><span class=se></span>  --size <span class=m>2048</span>
+</code></pre></div><p><strong>Elliptic Curve key:</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>az keyvault key create <span class=se>\
+</span><span class=se></span>  --vault-name my-keyvault-12345 <span class=se>\
+</span><span class=se></span>  --name my-kv-key <span class=se>\
+</span><span class=se></span>  --kty EC <span class=se>\
+</span><span class=se></span>  --curve P-256
+</code></pre></div>
+</div>
+</div>
+<br>
+<h3 id=install-sops-and-xsops-5-min>Install SOPS and XSOPS (~5 min)</h3>
+<h4 id=sops-installation>SOPS Installation</h4>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>Command</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>macOS</td>
+<td><code>brew install sops</code></td>
+</tr>
+<tr>
+<td>Ubuntu/Debian    </td>
+<td>Download from <a href=https://github.com/getsops/sops/releases>GitHub releases</a></td>
+</tr>
+<tr>
+<td>Windows</td>
+<td><code>choco install sops</code> or download from releases</td>
+</tr>
+</tbody>
+</table>
+<p><br>
+Verify: <code>sops --version</code></p>
+<h4 id=xsops-installation>XSOPS Installation</h4>
+<h5 id=quick-install-linuxmacos>Quick Install (Linux/macOS)</h5>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>curl -fsSL https://raw.githubusercontent.com/codingarchitect-wq/xsops/main/install.sh <span class=p>|</span> sudo bash
+</code></pre></div><p>Or install to a custom path (no sudo required):</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>curl -fsSL https://raw.githubusercontent.com/codingarchitect-wq/xsops/main/install.sh <span class=p>|</span> bash -s -- ~/.local/bin
+</code></pre></div>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=949f8ec9-17>
+<span>Manual Installation Options - click to expand</span>
+<span>↕</span>
+</label>
+<input id=949f8ec9-17 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<p><strong>Clone the repository:</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>git clone https://github.com/codingarchitect-wq/xsops.git
+<span class=nb>cd</span> xsops
+</code></pre></div><p><strong>Linux / macOS:</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Option 1: Symlink to /usr/local/bin (requires sudo)</span>
+sudo ln -s <span class=s2>&#34;</span><span class=k>$(</span><span class=nb>pwd</span><span class=k>)</span><span class=s2>/xsops&#34;</span> /usr/local/bin/xsops
+
+<span class=c1># Option 2: Add to PATH in ~/.bashrc or ~/.zshrc (no sudo required)</span>
+<span class=nb>echo</span> <span class=s2>&#34;export PATH=\&#34;\$PATH:</span><span class=k>$(</span><span class=nb>pwd</span><span class=k>)</span><span class=s2>\&#34;&#34;</span> &gt;&gt; ~/.bashrc
+<span class=nb>source</span> ~/.bashrc
+</code></pre></div><p><strong>Windows (WSL):</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Same as Linux - run from within WSL</span>
+sudo ln -s <span class=s2>&#34;</span><span class=k>$(</span><span class=nb>pwd</span><span class=k>)</span><span class=s2>/xsops&#34;</span> /usr/local/bin/xsops
+</code></pre></div><p><strong>Windows (Git Bash):</strong></p>
+<p>Symlinks are unreliable in Git Bash. Add the directory to your PATH instead:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Add to ~/.bashrc</span>
+<span class=nb>echo</span> <span class=s2>&#34;export PATH=\&#34;\$PATH:</span><span class=k>$(</span><span class=nb>pwd</span><span class=k>)</span><span class=s2>\&#34;&#34;</span> &gt;&gt; ~/.bashrc
+<span class=nb>source</span> ~/.bashrc
+</code></pre></div>
+</div>
+</div>
+<p>To verify installation, run:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>xsops
+</code></pre></div><h3 id=project-structure-5-min-per-project>Project Structure (~5 min per project)</h3>
+<p><code>xsops</code> script expects your projects to have this structure:</p>
+<pre tabindex=0><code>your-project/
+├── .sops.yaml              # SOPS configuration
+└── secrets/
+    ├── dev/
+    │   └── env.yaml        # Encrypted secrets for dev
+    └── prod/
+        └── env.yaml        # Encrypted secrets for prod
+</code></pre><p><code>dev</code> and <code>prod</code> are environment names you can define as you like.</p>
+<h3 id=create-a-sops-configuration-file-in-each-project>Create a SOPS configuration file in each project</h3>
+<p>Create a <code>.sops.yaml</code> file in the root of your project to define the encryption rules for your secret files.</p>
+<p>Example <code>.sops.yaml</code> using both PGP (plain or stored on YubiKey) and Azure Key Vault keys:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=c># .sops.yaml</span><span class=w>
+</span><span class=w></span><span class=nt>stores</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>yaml</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span><span class=nt>indent</span><span class=p>:</span><span class=w> </span><span class=m>2</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=nt>creation_rules</span><span class=p>:</span><span class=w>  
+</span><span class=w>  </span><span class=c># Dev secrets</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>path_regex</span><span class=p>:</span><span class=w> </span><span class=l>secrets/dev01/.*\.yaml$</span><span class=w>
+</span><span class=w>    </span><span class=nt>pgp</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=l>PGP_KEY_ID_HERE</span><span class=w>
+</span><span class=w>    </span><span class=nt>azure_keyvault</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=l>https://devkeyvaultname.vault.azure.net/keys/keyname/version</span><span class=w>
+</span><span class=w>
+</span><span class=w>  </span><span class=c># Prod secrets</span><span class=w>
+</span><span class=w>  </span>- <span class=nt>path_regex</span><span class=p>:</span><span class=w> </span><span class=l>secrets/prod/.*\.yaml$</span><span class=w>
+</span><span class=w>    </span><span class=nt>pgp</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=l>PGP_KEY_ID_HERE</span><span class=w>
+</span><span class=w>    </span><span class=nt>azure_keyvault</span><span class=p>:</span><span class=w>
+</span><span class=w>      </span>- <span class=l>https://prodkeyvaultname.vault.azure.net/keys/keyname/version</span><span class=w>
+</span></code></pre></div><h3 id=create-and-encrypt-secret-files>Create and encrypt secret files</h3>
+<p>Create your secret files in the appropriate environment folders and encrypt them using SOPS.</p>
+<p>Example <code>secrets/dev/env.yaml</code> (before encryption):</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>DATABASE_URL</span><span class=p>:</span><span class=w> </span><span class=l>postgres://dbuser:testpwd@localhost:5432/myapp_dev</span><span class=w>
+</span><span class=w></span><span class=nt>API_KEY</span><span class=p>:</span><span class=w> </span><span class=l>sk_test_apikey</span><span class=w>
+</span></code></pre></div><p>Encrypt with: <code>xsops encrypt dev</code></p>
+<p>The encrypted file will look something like this:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>DATABASE_URL</span><span class=p>:</span><span class=w> </span><span class=l>ENC[AES256_GCM,data:...,iv:...,tag:...,type:str]</span><span class=w>
+</span><span class=w></span><span class=nt>API_KEY</span><span class=p>:</span><span class=w> </span><span class=l>ENC[AES256_GCM,data:...,iv:...,tag:...,type:str]</span><span class=w>
+</span><span class=w></span><span class=nt>sops</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>azure_kv</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=nt>vault_url</span><span class=p>:</span><span class=w> </span><span class=l>https://devkeyvaultname.vault.azure.net</span><span class=w>
+</span><span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>keyname</span><span class=w>
+</span><span class=w>      </span><span class=nt>version</span><span class=p>:</span><span class=w> </span><span class=l>version</span><span class=w>
+</span><span class=w>      </span><span class=nt>created_at</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;2025-12-08T14:06:26Z&#34;</span><span class=w>
+</span><span class=w>      </span><span class=nt>enc</span><span class=p>:</span><span class=w> </span><span class=l>SRUWx...........gaOA</span><span class=w>
+</span><span class=w>  </span><span class=nt>lastmodified</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;2025-12-10T21:42:25Z&#34;</span><span class=w>
+</span><span class=w>  </span><span class=nt>mac</span><span class=p>:</span><span class=w> </span><span class=l>ENC[AES256_GCM,data:....,iv:...,tag:...,type:str]</span><span class=w>
+</span><span class=w>  </span><span class=nt>pgp</span><span class=p>:</span><span class=w>
+</span><span class=w>    </span>- <span class=nt>created_at</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;2025-12-08T14:06:26Z&#34;</span><span class=w>
+</span><span class=w>      </span><span class=nt>enc</span><span class=p>:</span><span class=w> </span><span class=p>|-</span><span class=sd>
+</span><span class=sd>        -----BEGIN PGP MESSAGE-----
+</span><span class=sd>
+</span><span class=sd>        h...5g==
+</span><span class=sd>        =27qa
+</span><span class=sd>        -----END PGP MESSAGE-----</span><span class=w>        
+</span><span class=w>      </span><span class=nt>fp</span><span class=p>:</span><span class=w> </span><span class=l>D...D</span><span class=w>
+</span><span class=w>  </span><span class=nt>unencrypted_suffix</span><span class=p>:</span><span class=w> </span><span class=l>_unencrypted</span><span class=w>
+</span><span class=w>  </span><span class=nt>version</span><span class=p>:</span><span class=w> </span><span class=m>3.11.0</span><span class=w>
+</span></code></pre></div><h3 id=using-xsops-to-run-your-application-with-decrypted-secrets>Using XSOPS to run your application with decrypted secrets</h3>
+<p>Use <code>xsops</code> to run your application with the decrypted secrets injected as environment variables.
+Example command to run your application in the <code>dev</code> environment:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>xsops run dev -- your-application-command
+</code></pre></div><p>This command will:</p>
+<ul>
+<li>Decrypt the secrets from <code>secrets/dev/env.yaml</code> using SOPS.</li>
+<li>Inject the decrypted secrets as environment variables for <code>your-application-command</code>.</li>
+</ul>
+<h3 id=cicd-integration>CI/CD Integration</h3>
+<p>In your CI/CD pipeline, use <code>xsops</code> to run your build and deployment commands with the appropriate environment secrets.</p>
+<p>The identity used by the CI/CD system must have access to the Azure Key Vault or to the GPG keys (if using GPG).</p>
+<p>SOPS will automatically use the available keys to decrypt the secrets.</p>
+<h2 id=verification>Verification</h2>
+<p>Before using this setup in production, verify the complete flow works:</p>
+<h3 id=1-test-gpg--yubikey>1. Test GPG + YubiKey</h3>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Ensure YubiKey is detected</span>
+gpg --card-status
+
+<span class=c1># Test encryption/decryption (YubiKey must be inserted)</span>
+<span class=nb>echo</span> <span class=s2>&#34;test&#34;</span> <span class=p>|</span> gpg --encrypt --recipient &lt;your-key-id&gt; <span class=p>|</span> gpg --decrypt
+<span class=c1># Should prompt for PIN and touch, then output &#34;test&#34;</span>
+</code></pre></div><h3 id=2-test-xsops-encryptiondecryption>2. Test XSOPS encryption/decryption</h3>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=c7d1f012-18>
+<span>Full XSOPS test script - click to expand</span>
+<span>↕</span>
+</label>
+<input id=c7d1f012-18 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash>mkdir -p /tmp/xsops-test/secrets/testenv
+<span class=nb>cd</span> /tmp/xsops-test
+
+<span class=c1># Get the first GPG key fingerprint from your system</span>
+<span class=nv>GPG_FP</span><span class=o>=</span><span class=k>$(</span>gpg --list-keys --keyid-format LONG <span class=p>|</span> grep -E <span class=s2>&#34;^pub&#34;</span> <span class=p>|</span> head -1 <span class=p>|</span> awk <span class=s1>&#39;{print $2}&#39;</span> <span class=p>|</span> cut -d<span class=s1>&#39;/&#39;</span> -f2<span class=k>)</span>
+<span class=nb>echo</span> <span class=s2>&#34;Using GPG key: </span><span class=nv>$GPG_FP</span><span class=s2>&#34;</span>
+
+<span class=c1># Create .sops.yaml config file</span>
+cat &gt; /tmp/xsops-test/.sops.yaml <span class=s>&lt;&lt;EOF
+</span><span class=s>creation_rules:
+</span><span class=s>  - path_regex: .*\.yaml$
+</span><span class=s>    pgp: $GPG_FP
+</span><span class=s>EOF</span>
+
+<span class=c1># Create a test file</span>
+<span class=nb>echo</span> <span class=s2>&#34;TEST_SECRET: hello-world&#34;</span> &gt; /tmp/xsops-test/secrets/testenv/env.yaml
+
+<span class=c1># Encrypt (uses .sops.yaml rules)</span>
+xsops encrypt testenv
+
+<span class=c1># Verify it&#39;s encrypted</span>
+cat /tmp/xsops-test/secrets/testenv/env.yaml
+<span class=c1># Should show ENC[...] values</span>
+
+<span class=c1># Run a command with secrets injected</span>
+xsops run testenv -- env <span class=p>|</span> grep TEST_SECRET
+<span class=c1># Should show your decrypted value: TEST_SECRET=hello-world</span>
+
+<span class=c1># Verify secrets aren&#39;t in global env</span>
+env <span class=p>|</span> grep TEST_SECRET
+<span class=c1># Should show nothing (secrets only exist in subprocess)</span>
+
+<span class=c1># Decrypt to verify</span>
+xsops view testenv
+<span class=c1># Should show plaintext</span>
+
+<span class=c1># Clean up</span>
+<span class=nb>cd</span> ~
+rm -r /tmp/xsops-test
+</code></pre></div>
+</div>
+</div>
+<h2 id=troubleshooting>Troubleshooting</h2>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=b6baf932-19>
+<span>YubiKey not detected - click to expand</span>
+<span>↕</span>
+</label>
+<input id=b6baf932-19 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Check if YubiKey is visible</span>
+ykman list
+
+<span class=c1># Restart the smart card daemon</span>
+<span class=c1># macOS:</span>
+sudo pkill -9 pcscd <span class=o>&amp;&amp;</span> sudo pcscd
+
+<span class=c1># Linux:</span>
+sudo systemctl restart pcscd
+</code></pre></div>
+</div>
+</div>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=77736a0b-20>
+<span>GPG can't find the key on YubiKey - click to expand</span>
+<span>↕</span>
+</label>
+<input id=77736a0b-20 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Re-learn card serial number</span>
+gpg-connect-agent <span class=s2>&#34;scd serialno&#34;</span> <span class=s2>&#34;learn --force&#34;</span> /bye
+
+<span class=c1># If key was on a different YubiKey, fetch the public key stub</span>
+gpg --card-status
+</code></pre></div>
+</div>
+</div>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=67bb5d97-21>
+<span>No secret key errors - click to expand</span>
+<span>↕</span>
+</label>
+<input id=67bb5d97-21 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<p>This usually means GPG lost the reference to the YubiKey. Fix:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Delete the key stub and re-import</span>
+gpg --delete-secret-keys &lt;key-id&gt;
+gpg --card-status  <span class=c1># Re-creates the stub from YubiKey</span>
+</code></pre></div>
+</div>
+</div>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=24d51203-22>
+<span>PIN locked (3 wrong attempts) - click to expand</span>
+<span>↕</span>
+</label>
+<input id=24d51203-22 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<p>Use the Reset Code to unlock, or if you don&rsquo;t have one:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Reset the OpenPGP applet (WARNING: deletes keys on card)</span>
+ykman openpgp reset
+</code></pre></div>
+</div>
+</div>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=a2ecec5c-23>
+<span>SOPS can't decrypt - click to expand</span>
+<span>↕</span>
+</label>
+<input id=a2ecec5c-23 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Check which keys can decrypt the file</span>
+sops filestatus secrets/dev/env.yaml
+
+<span class=c1># Verify you have access to at least one key</span>
+gpg --list-secret-keys  <span class=c1># For PGP</span>
+az account show          <span class=c1># For Azure Key Vault (must be logged in)</span>
+</code></pre></div>
+</div>
+</div>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=b235547f-24>
+<span>Azure Key Vault permission denied - click to expand</span>
+<span>↕</span>
+</label>
+<input id=b235547f-24 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Check current identity</span>
+az account show
+
+<span class=c1># Verify Key Vault access (need &#34;Key Vault Crypto User&#34; or higher)</span>
+az keyvault key show --vault-name &lt;vault&gt; --name &lt;key&gt;
+</code></pre></div>
+</div>
+</div>
+<div class=gblog-expand>
+<label class="gblog-expand__head flex justify-between" for=9ef96518-25>
+<span>GPG agent caching issues - click to expand</span>
+<span>↕</span>
+</label>
+<input id=9ef96518-25 type=checkbox class="gblog-expand__control hidden">
+<div class="gblog-markdown--nested gblog-expand__content">
+<p>If GPG keeps asking for your PIN even after entering it:</p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Restart GPG agent</span>
+gpgconf --kill gpg-agent
+gpg-connect-agent /bye  <span class=c1># Restarts agent</span>
+</code></pre></div>
+</div>
+</div>
+<hr>
+<h2 id=quick-reference-card>Quick Reference Card</h2>
+<p><strong>Daily Commands:</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Run app with secrets</span>
+xsops run &lt;env&gt; -- &lt;command&gt;
+
+<span class=c1># View decrypted secrets (read-only)</span>
+xsops view &lt;env&gt;
+
+<span class=c1># Edit secrets in editor</span>
+xsops edit &lt;env&gt;
+
+<span class=c1># Encrypt new/modified secrets</span>
+xsops encrypt &lt;env&gt;
+</code></pre></div><p><strong>First-Time Setup:</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># Check YubiKey</span>
+gpg --card-status
+
+<span class=c1># Test decryption works</span>
+<span class=nb>echo</span> <span class=s2>&#34;test&#34;</span> <span class=p>|</span> gpg --encrypt --recipient &lt;key-id&gt; <span class=p>|</span> gpg --decrypt
+</code></pre></div><p><strong>Quick Fixes:</strong></p>
+<div class=highlight><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=c1># YubiKey not working</span>
+gpg-connect-agent <span class=s2>&#34;scd serialno&#34;</span> <span class=s2>&#34;learn --force&#34;</span> /bye
+
+<span class=c1># GPG agent issues</span>
+gpgconf --kill gpg-agent <span class=o>&amp;&amp;</span> gpg-connect-agent /bye
+</code></pre></div>
+</div>
+<div class=after-post-tags>
+<ul class=tags>
+<li>
+<a href=/tags/security>Security</a>
+</li>
+<li>
+<a href=/tags/dotenv>dotenv</a>
+</li>
+<li>
+<a href=/tags/sops>SOPS</a>
+</li>
+<li>
+<a href=/tags/gpg>GPG</a>
+</li>
+<li>
+<a href=/tags/yubikey>Yubikey</a>
+</li>
+<li>
+<a href=/tags/azure-key-vault>Azure Key Vault</a>
+</li>
+</ul>
+</div>
+<div class="row PageNavigation d-flex justify-content-between font-weight-bold">
+<a class="d-block col-md-6 text-lg-right" href=https://codingarchitect-wq.com/posts/pulumi-azure-ts-static-website-tdd/>Test driven development for Infrastructure as Code using Pulumi and Jest &#187;</a>
+<div class=clearfix></div>
+</div>
+</div>
+</div>
+</div>
+<div class=container>
+<div id=comments class="row justify-content-center mb-5">
+<div class=col-md-8>
+<div id=disqus_thread></div>
+<script type=application/javascript>var disqus_config=function(){};(function(){if(["localhost","127.0.0.1"].indexOf(window.location.hostname)!=-1){document.getElementById('disqus_thread').innerHTML='Disqus comments not available by default when the website is previewed locally.';return}var b=document,a=b.createElement('script');a.async=!0,a.src='//codingarchitect-wq.disqus.com/embed.js',a.setAttribute('data-timestamp',+new Date),(b.head||b.body).appendChild(a)})()</script>
+<noscript>Please enable JavaScript to view the <a href=https://disqus.com/?ref_noscript>comments powered by Disqus.</a></noscript>
+<a href=https://disqus.com class=dsq-brlink>comments powered by <span class=logo-disqus>Disqus</span></a>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="jumbotron fortags">
+<div class="d-md-flex h-100">
+<div class="col-md-4 transpdark align-self-center text-center h-100">
+<div class="d-md-flex align-items-center justify-content-center h-100">
+<h2 class="d-md-block d-none align-self-center py-1 font-weight-light">Explore <span class="d-none d-md-inline">→</span></h2>
+</div>
+</div>
+<div class="col-md-8 p-5 align-self-center text-center">
+<a class="mt-1 mb-1" href=/tags/azure>azure</a>
+<a class="mt-1 mb-1" href=/tags/azure-key-vault>azure-key-vault</a>
+<a class="mt-1 mb-1" href=/tags/dotenv>dotenv</a>
+<a class="mt-1 mb-1" href=/tags/gpg>gpg</a>
+<a class="mt-1 mb-1" href=/tags/infrastructure-as-code>infrastructure-as-code</a>
+<a class="mt-1 mb-1" href=/tags/jest>jest</a>
+<a class="mt-1 mb-1" href=/tags/pulumi>pulumi</a>
+<a class="mt-1 mb-1" href=/tags/security>security</a>
+<a class="mt-1 mb-1" href=/tags/sops>sops</a>
+<a class="mt-1 mb-1" href=/tags/static-website-hosting>static-website-hosting</a>
+<a class="mt-1 mb-1" href=/tags/test-driven-development>test-driven-development</a>
+<a class="mt-1 mb-1" href=/tags/yubikey>yubikey</a>
+</div>
+</div>
+</div>
+<footer class=footer>
+<div class=container>
+<div class=row>
+<div class="col-md col-sm text-center text-lg-left">
+&copy; Copyright Alexandru Prian - All rights reserved
+</div>
+<div class="col-md col-sm text-center text-lg-center">
+Built with <a href=https://gohugo.io/>Hugo</a> and ❤︎
+</div>
+<div class="col-md col-sm text-center text-lg-right">
+<a target=_blank rel=noopener href=https://www.wowthemes.net>Mediumish Theme</a> by WowThemes.net
+</div>
+</div>
+</div>
+</footer>
+</div>
+<script src=https://code.jquery.com/jquery-3.4.1.min.js></script>
+<script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js integrity=sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut crossorigin=anonymous></script>
+<script src=https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js integrity=sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM crossorigin=anonymous></script>
+<script src=https://codingarchitect-wq.com/js/mediumish.84218587c174fd40bce82544b98851670f0b124a7324b349c54a4065e2b32ffc.js integrity="sha256-hCGFh8F0/UC86CVEuYhRZw8LEkpzJLNJxUpAZeKzL/w="></script>
+<script src=https://codingarchitect-wq.com/js/asciinema-player.js></script>
+</body>
+</html>
