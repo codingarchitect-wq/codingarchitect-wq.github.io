@@ -127,5 +127,17 @@ Built with <a href=https://gohugo.io/>Hugo</a> and ❤︎
 <script src=https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js integrity=sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut crossorigin=anonymous></script>
 <script src=https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js integrity=sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM crossorigin=anonymous></script>
 <script src=https://codingarchitect-wq.com/js/mediumish.84218587c174fd40bce82544b98851670f0b124a7324b349c54a4065e2b32ffc.js integrity="sha256-hCGFh8F0/UC86CVEuYhRZw8LEkpzJLNJxUpAZeKzL/w="></script>
+<style>#cookie-consent-banner{position:fixed;bottom:0;left:0;right:0;background:#2d3748;color:#fff;padding:1rem;display:none;z-index:9999;box-shadow:0 -2px 10px rgba(0,0,0,.2)}#cookie-consent-banner.show{display:block}#cookie-consent-banner .consent-content{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:1rem}#cookie-consent-banner p{margin:0;flex:1;min-width:200px}#cookie-consent-banner a{color:#90cdf4;text-decoration:underline}#cookie-consent-banner .consent-buttons{display:flex;gap:.5rem;flex-wrap:wrap}#cookie-consent-banner button{padding:.5rem 1.25rem;border:none;border-radius:4px;cursor:pointer;font-weight:500;transition:opacity .2s}#cookie-consent-banner button:hover{opacity:.9}#cookie-consent-banner .btn-accept{background:#48bb78;color:#fff}#cookie-consent-banner .btn-deny{background:#718096;color:#fff}@media(max-width:600px){#cookie-consent-banner .consent-content{flex-direction:column;text-align:center}#cookie-consent-banner .consent-buttons{width:100%;justify-content:center}}</style>
+<div id=cookie-consent-banner>
+<div class=consent-content>
+<p>We use cookies to analyze site traffic and improve your experience.
+<a href=/legal-notice/#privacy-policy>Learn more</a></p>
+<div class=consent-buttons>
+<button class=btn-accept onclick=acceptCookies()>Accept</button>
+<button class=btn-deny onclick=denyCookies()>Deny</button>
+</div>
+</div>
+</div>
+<script>(function(){var b='cookie-consent',e;function f(){return localStorage.getItem(b)}function c(a){localStorage.setItem(b,a)}function a(a){typeof window.clarity=='function'&&window.clarity('consentv2',{ad_Storage:a?'granted':'denied',analytics_Storage:a?'granted':'denied'})}function g(){var a=document.getElementById('cookie-consent-banner');a&&a.classList.add('show')}function d(){var a=document.getElementById('cookie-consent-banner');a&&a.classList.remove('show')}window.acceptCookies=function(){c('granted'),a(!0),d()},window.denyCookies=function(){c('denied'),a(!1),d()},e=f(),e==='granted'?a(!0):e==='denied'?a(!1):g()})()</script>
 </body>
 </html>
